@@ -1,0 +1,92 @@
+name: Profiling
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    # KST 10:00, 16:00, 22:00, 04:00
+    - cron: '0 1,7,13,19 * * *'
+
+env:
+  NUGU_REGISTRY_SERVER: https://stg-reg-http.sktnugu.com
+  CLIENT_ID: ${{ secrets.TRIAL_STG_CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.TRIAL_STG_CLIENT_SECRET }}
+
+jobs:
+  profiling:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Get Token
+        id: token
+        run: |
+          SERIAL=profiling_test
+          JSON=$(curl -s -X POST https://stg-api.sktnugu.com/v1/auth/oauth/token \
+            -d "grant_type=client_credentials&client_id=$CLIENT_ID&client_secret=$CLIENT_SECRET&data=%7B%22deviceSerialNumber%22%3A%22$SERIAL%22%7D")
+          echo $JSON
+          TOKEN=$(echo $JSON | jq ".access_token" -r)
+          echo ::set-output name=token::$TOKEN
+
+      - name: Setup packages
+        run: |
+          sudo add-apt-repository -y ppa:nugulinux/sdk
+          echo "deb [trusted=yes] https://nugulinux.github.io/sdk-unstable/ubuntu/ bionic main" | sudo tee /etc/apt/sources.list.d/nugu-unstable.list
+          sudo apt-get update
+          sudo apt-get install -y \
+            gstreamer1.0-pulseaudio \
+            libnugu \
+            libnugu-plugins-default \
+            libnugu-examples \
+            alsa \
+            pulseaudio
+          mkdir /tmp/www
+          pwd
+          ls -l
+
+      - name: Check sound
+        run: |
+          aplay -l
+          arecord -l
+          pactl info
+
+      - name: Run test - 며칠이야
+        run: |
+          export NUGU_TOKEN=${{ steps.token.outputs.token }}
+          ./run_test.sh date
+
+      - name: Run test - 몇시야
+        run: |
+          export NUGU_TOKEN=${{ steps.token.outputs.token }}
+          ./run_test.sh time
+
+      - name: Run test - 날씨
+        run: |
+          export NUGU_TOKEN=${{ steps.token.outputs.token }}
+          ./run_test.sh weather
+
+      - name: Run test - 4더하기4는 얼마야
+        run: |
+          export NUGU_TOKEN=${{ steps.token.outputs.token }}
+          ./run_test.sh 4plus4
+
+      - name: Run test - Flo 들려줘
+        run: |
+          export NUGU_TOKEN=${{ steps.token.outputs.token }}
+          ./run_test.sh flo
+
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: results
+          path: /tmp/www/*.csv
+
+      - name: Deploy to Github Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.5
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          branch: gh-pages
+          folder: /tmp/www
+          clean: true
+          single-commit: true
