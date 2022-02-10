@@ -1,2 +1,4 @@
 # profiling
-Performance profiling log
+
+Performance [profiling log](https://github.com/nugulinux/profiling/tree/gh-pages)
+
