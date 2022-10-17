@@ -14,10 +14,10 @@ env:
 
 jobs:
   profiling:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Get Token
         id: token
@@ -49,6 +49,7 @@ jobs:
         run: |
           aplay -l
           arecord -l
+          pulseaudio --daemonize --exit-idle-time=-1
           pactl info
 
       - name: Run test - 며칠이야
@@ -77,13 +78,13 @@ jobs:
           ./run_test.sh flo
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: results
           path: /tmp/www/*.csv
 
       - name: Deploy to Github Pages
-        uses: JamesIves/github-pages-deploy-action@v4.2.2
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
           git-config-name: nugulinux-bot
           git-config-email: nugulinux@gmail.com
