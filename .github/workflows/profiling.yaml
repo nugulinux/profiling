@@ -3,9 +3,10 @@ on:
   push:
     branches:
       - master
-  schedule:
-    # KST 10:00, 16:00, 22:00, 04:00
-    - cron: '0 1,7,13,19 * * *'
+  workflow_dispatch:
+#  schedule:
+#    # KST 10:00, 16:00, 22:00, 04:00
+#    - cron: '0 1,7,13,19 * * *'
 
 env:
   NUGU_REGISTRY_SERVER: https://stg-reg-http.sktnugu.com
